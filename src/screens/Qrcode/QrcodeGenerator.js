@@ -2,8 +2,9 @@ import React, { useState, useRef, createRef } from 'react';
 import { View, Platform, PermissionsAndroid, Text } from 'react-native';
 import { Button, Icon, Input, Dialog } from '@rneui/themed';
 import QRCode from 'react-native-qrcode-svg'
-// import Share from 'react-native-share'
-// import RNFetchBlob from 'rn-fetch-blob'
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
 import styles from '../../style/style';
 const QrcodeGenerator = () => {
     const [QRvalue, setQRValue] = useState('lintang');
@@ -11,17 +12,27 @@ const QrcodeGenerator = () => {
     const [showDialog, setShowDialog] = useState(false);
     const [loading, setloading] = useState(false);
 
-    // const shareQR = () => {
-    //     QRImage.toDataURL((data) => {
-    //         const shareImageBase64 = {
-    //             title: "QR",
-    //             message: "Here is my QR code!",
-    //             url: `data:image/jpeg;base64,${data}`
-    //         };
-    //         setQRImage(String(shareImageBase64.url));
-    //         Share.open(shareImageBase64);
-    //     })
-    // }
+    const shareQR = async () => {
+        const fileUri = FileSystem.cacheDirectory + 'barcode.png';
+        await FileSystem.downloadAsync(
+            'https://api.qrserver.com/v1/create-qr-code/?data=' + QRvalue + '&size=200x200',
+            fileUri
+        )
+            .then(async ({ uri }) => {
+                if (Platform.OS === 'ios') {
+                    await Sharing.shareAsync(uri);
+                } else {
+                    await Sharing.shareAsync(uri, {
+                        mimeType: 'image/png',
+                        dialogTitle: 'Share this QR Code',
+                        UTI: 'public.png',
+                    });
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
 
     const downloadQR = () => {
         setShowDialog(true)
@@ -109,7 +120,7 @@ const QrcodeGenerator = () => {
                 titleStyle={{ ...styles.titleButtonHome, fontSize: 20 }}
                 buttonStyle={{ ...styles.buttonHome, height: 50 }}
                 containerStyle={{ ...styles.buttonHomeContainer, marginTop: 20, marginBottom: 10 }}
-            // onPress={shareQR}
+                onPress={shareQR}
             />
             <Button
                 title="Download"

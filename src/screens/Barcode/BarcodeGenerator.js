@@ -1,18 +1,18 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Platform, PermissionsAndroid, Text, Dimensions } from 'react-native';
+import { View, Platform, PermissionsAndroid, Text, Dimensions, Share } from 'react-native';
 import { Button, Icon, Input, Dialog } from '@rneui/themed';
-import Barcode from '@kichiyaki/react-native-barcode-generator';
-// import Share from 'react-native-share'
-// import RNFetchBlob from 'rn-fetch-blob'
+import Barcode from 'react-native-barcode-svg';
 import ViewShot, { captureRef } from "react-native-view-shot";
 import styles from '../../style/style';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 const BarcodeGenerator = () => {
 
     const [BarValue, setBarValue] = useState('lintangwisesa');
     const [BarImage, setBarImage] = useState('');
     const [showDialog, setShowDialog] = useState(false);
-    const [loading, setloading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const ref = useRef();
 
     // const shareQR = useCallback(() => {
@@ -34,71 +34,89 @@ const BarcodeGenerator = () => {
     //     );
     // }, []);
 
-    const downloadQR = useCallback(() => {
-        setShowDialog(true)
-        setloading(true)
-        captureRef(ref, {
-            format: "jpg",
-            quality: 0.8,
-            result: "base64",
-        }).then(
-            async (b64) => {
-                const shareImageBase64 = {
-                    title: "Barcode",
-                    message: "Here is my barcode!",
-                    url: `data:image/jpeg;base64,${b64}`
-                };
-                setBarImage(String(shareImageBase64.url));
+    // const downloadQR = useCallback(() => {
+    //     setShowDialog(true)
+    //     setLoading(true)
+    //     captureRef(ref, {
+    //         format: "jpg",
+    //         quality: 0.8,
+    //         result: "base64",
+    //     }).then(
+    //         async (b64) => {
+    //             const shareImageBase64 = {
+    //                 title: "Barcode",
+    //                 message: "Here is my barcode!",
+    //                 url: `data:image/jpeg;base64,${b64}`
+    //             };
+    //             setBarImage(String(shareImageBase64.url));
 
-                if (Platform.OS === 'ios') {
-                    saveImage(String(shareImageBase64.url));
-                } else {
-                    try {
-                        const granted = await PermissionsAndroid.request(
-                            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                            {
-                                title: 'Storage Permission Required',
-                                message: 'App needs access to your storage to download the QR code image',
-                            }
-                        );
-                        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                            console.log('Storage Permission Granted');
-                            saveImage(String(shareImageBase64.url));
-                        } else {
-                            console.log('Storage Permission Not Granted');
-                        }
-                    } catch (err) {
-                        console.log(err)
-                    }
-                }
-            },
-            (error) => console.error("Oops, snapshot failed", error)
-        );
-    }, [])
+    //             if (Platform.OS === 'ios') {
+    //                 saveImage(String(shareImageBase64.url));
+    //             } else {
+    //                 try {
+    //                     const granted = await PermissionsAndroid.request(
+    //                         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    //                         {
+    //                             title: 'Storage Permission Required',
+    //                             message: 'App needs access to your storage to download the Barcode image',
+    //                         }
+    //                     );
+    //                     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+    //                         console.log('Storage Permission Granted');
+    //                         saveImage(String(shareImageBase64.url));
+    //                     } else {
+    //                         console.log('Storage Permission Not Granted');
+    //                     }
+    //                 } catch (err) {
+    //                     console.log(err)
+    //                 }
+    //             }
+    //         },
+    //         (error) => console.error("Oops, snapshot failed", error)
+    //     );
+    // }, [])
 
-    const saveImage = (barcode) => {
-        setloading(false)
-        barcode = barcode.split('data:image/jpeg;base64,')[1]
+    const shareQR = async () => {
+        // const fileUri = FileSystem.cacheDirectory + 'barcode.png';
+        // await FileSystem.downloadAsync(
+        //     'https://api.qrserver.com/v1/create-qr-code/?data=' + BarValue + '&size=200x200',
+        //     fileUri
+        // )
+        //     .then(async ({ uri }) => {
+        //         if (Platform.OS === 'ios') {
+        //             await Sharing.shareAsync(uri);
+        //         } else {
+        // await Sharing.shareAsync(uri, {
+        //     mimeType: 'image/png',
+        //     dialogTitle: 'Share this barcode',
+        //     UTI: 'public.png',
+        // });
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.error(error);
+        //     });
+        // const fileUri = FileSystem.cacheDirectory + 'barcode.png';
 
-        let date = new Date();
-        const { fs } = RNFetchBlob;
-        let filename = '/barcode_' + Math.floor(date.getTime() + date.getSeconds() / 2) + '.jpeg';
-        let PictureDir = fs.dirs.DownloadDir + filename;
+        // const barcodeUrl = 'https://bwipjs-api.metafloor.com/?bcid=code128&text=' + BarValue + '&scale=3&includetext';
 
-        fs.writeFile(PictureDir, barcode, 'base64')
-            .then(() => {
-                RNFetchBlob.android.addCompleteDownload({
-                    title: '🎁 Here is your barcode!',
-                    useDownloadManager: true,
-                    showNotification: true,
-                    notification: true,
-                    path: PictureDir,
-                    mime: 'image/jpeg',
-                    description: 'Image',
-                });
-            })
-            .catch((err) => { console.log('ERR: ', err) })
+        // await FileSystem.downloadAsync(barcodeUrl, fileUri)
+        //     .then(async ({ uri }) => {
+        //         console.log('Barcode downloaded to', uri);
+        //         await Sharing.shareAsync(uri, {
+        //             mimeType: 'image/png',
+        //             dialogTitle: 'Share this barcode',
+        //             UTI: 'public.png',
+        //         });
+        //     })
+        //     .catch(error => {
+        //         console.error('Error downloading barcode', error);
+        //     });
     }
+
+    const downloadQR = async () => {
+    };
+
 
     return (
         <View style={styles.container}>
@@ -114,15 +132,17 @@ const BarcodeGenerator = () => {
                     />
                 }
             />
-            <ViewShot ref={ref}>
-                <Barcode
+            <ViewShot ref={ref} options={{ format: 'jpg', quality: 0.9 }}>
+                {/* <SvgBarcode
                     format="CODE128"
                     value={BarValue ? BarValue : 'lintangwisesa'}
                     text={BarValue ? BarValue : 'lintangwisesa'}
                     style={{ marginBottom: 20 }}
                     textStyle={{ color: '#000' }}
                     maxWidth={Dimensions.get('window').width / 1.5}
-                />
+                /> */}
+                <Barcode value={BarValue} format="CODE128" />
+
             </ViewShot>
             <Button
                 title="Share QR"
@@ -131,7 +151,7 @@ const BarcodeGenerator = () => {
                 titleStyle={{ ...styles.titleButtonHome, fontSize: 20 }}
                 buttonStyle={{ ...styles.buttonHome, height: 50 }}
                 containerStyle={{ ...styles.buttonHomeContainer, marginTop: 20, marginBottom: 10 }}
-            // onPress={shareQR}
+                onPress={shareQR}
             />
             <Button
                 title="Download"
@@ -140,7 +160,7 @@ const BarcodeGenerator = () => {
                 titleStyle={{ ...styles.titleButtonHome, fontSize: 20 }}
                 buttonStyle={{ ...styles.buttonHome, height: 50 }}
                 containerStyle={{ ...styles.buttonHomeContainer, marginTop: 10, marginBottom: 10 }}
-            // onPress={downloadQR}
+                onPress={downloadQR}
             />
             <Dialog
                 isVisible={showDialog}
