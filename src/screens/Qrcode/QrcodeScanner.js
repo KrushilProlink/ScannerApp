@@ -1,7 +1,8 @@
 import { Button, Dialog } from "@rneui/themed";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
+import * as Clipboard from 'expo-clipboard';
 
 const QrcodeScanner = () => {
     const [facing, setFacing] = useState("back");
@@ -25,7 +26,23 @@ const QrcodeScanner = () => {
             </View>
         );
     }
+
+    const copyToClipboard = async (data) => {
+        Alert.alert(
+            "Success",
+            "Text Copy Successfully...",
+            [
+                {
+                    text: "Ok",
+                }
+            ],
+            { cancelable: true }
+        );
+        await Clipboard.setStringAsync(data);
+    };
+
     const handleBarCodeScanned = ({ type, data }) => {
+        Vibration.vibrate()
         setScanned(true);
         setShowDialog(true);
         setBarcodeValue(data);
@@ -46,6 +63,7 @@ const QrcodeScanner = () => {
                     },
                 }}
                 enableTorch={light}
+                focusable={true}
                 onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
             >
                 <View style={styles.buttonContainer}>
@@ -74,13 +92,13 @@ const QrcodeScanner = () => {
             </CameraView>
             <Dialog
                 isVisible={showDialog}
-                onBackdropPress={() => setShowDialog(!showDialog)}
+                onBackdropPress={() => { setShowDialog(!showDialog); setScanned(false); }}
             >
                 <Dialog.Title
                     titleStyle={{ color: "#000", fontSize: 25 }}
                     title="Scanned QR :"
                 />
-                <Text style={{ color: "#000", fontSize: 25 }}>{barcodeValue}</Text>
+                <Text style={{ color: "#000", fontSize: 25 }} onPress={() => copyToClipboard(barcodeValue)}>{barcodeValue}</Text>
                 <Dialog.Actions>
                     <Dialog.Button
                         title="Scan Again"

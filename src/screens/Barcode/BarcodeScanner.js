@@ -1,7 +1,8 @@
 import { Button, Dialog } from "@rneui/themed";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
+import * as Clipboard from 'expo-clipboard';
 
 const BarcodeScanner = () => {
     const [facing, setFacing] = useState("back");
@@ -25,7 +26,25 @@ const BarcodeScanner = () => {
             </View>
         );
     }
+
+
+    const copyToClipboard = async (data) => {
+        Alert.alert(
+            "Success",
+            "Barcode Copy Successfully...",
+            [
+                {
+                    text: "Ok",
+                }
+            ],
+            { cancelable: true }
+        );
+        await Clipboard.setStringAsync(data);
+    };
+
+
     const handleBarCodeScanned = ({ type, data }) => {
+        Vibration.vibrate()
         setScanned(true);
         setShowDialog(true);
         setBarcodeValue(data);
@@ -74,13 +93,13 @@ const BarcodeScanner = () => {
             </CameraView>
             <Dialog
                 isVisible={showDialog}
-                onBackdropPress={() => setShowDialog(!showDialog)}
+                onBackdropPress={() => { setShowDialog(!showDialog); setScanned(false); }}
             >
                 <Dialog.Title
                     titleStyle={{ color: "#000", fontSize: 25 }}
                     title="Scanned Barcode :"
                 />
-                <Text style={{ color: "#000", fontSize: 25 }}>{barcodeValue}</Text>
+                <Text style={{ color: "#000", fontSize: 25 }} onPress={() => copyToClipboard(barcodeValue)}>{barcodeValue}</Text>
                 <Dialog.Actions>
                     <Dialog.Button
                         title="Scan Again"
