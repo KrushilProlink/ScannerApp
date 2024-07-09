@@ -1,8 +1,11 @@
 import { Button, Dialog } from "@rneui/themed";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
 import * as Clipboard from 'expo-clipboard';
+import axios from 'axios'
+import io from 'socket.io-client';
+const socket = io('http://192.168.29.205:3000');
 
 const QrcodeScanner = () => {
     const [facing, setFacing] = useState("back");
@@ -11,6 +14,14 @@ const QrcodeScanner = () => {
     const [light, setLight] = useState(false);
     const [showDialog, setShowDialog] = useState(false);
     const [barcodeValue, setBarcodeValue] = useState("");
+    const [receivedMessage, setReceivedMessage] = useState('');
+    const [message, setMessage] = useState('');
+
+
+
+    const sendMessage = (data) => {
+        socket.emit('apiCalled', data);
+    };
 
     if (!permission) {
         return <View />;
@@ -41,12 +52,29 @@ const QrcodeScanner = () => {
         await Clipboard.setStringAsync(data);
     };
 
+
+
+    const saveQrCode = async (data) => {
+        const response = await axios.post('http://192.168.29.205:3000/api/qr-code/add', {
+            qrCode: data
+        })
+        if (response?.status === 200) {
+            alert('Qr Code save successfully')
+            socket.emit('apiCalled', "save qr code");
+
+        }
+    }
+
+
     const handleBarCodeScanned = ({ type, data }) => {
         Vibration.vibrate()
         setScanned(true);
+        sendMessage(data)
+        saveQrCode(data)
         setShowDialog(true);
         setBarcodeValue(data);
     };
+
 
     return (
         <View style={styles.container}>

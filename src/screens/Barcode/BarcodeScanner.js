@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
 import * as Clipboard from 'expo-clipboard';
 
+
 const BarcodeScanner = () => {
     const [facing, setFacing] = useState("back");
     const [permission, requestPermission] = useCameraPermissions();
@@ -47,6 +48,7 @@ const BarcodeScanner = () => {
         Vibration.vibrate()
         setScanned(true);
         setShowDialog(true);
+
         setBarcodeValue(data);
     };
 
